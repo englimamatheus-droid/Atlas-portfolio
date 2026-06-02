@@ -2654,7 +2654,13 @@ function addNotice(btn) {
   var desc = document.getElementById('ni-desc-'+contractId).value.trim();
   if (!subj) { alert('Preencha o assunto.'); return; }
   if (!contract.notices) contract.notices = [];
-  contract.notices.push({id:id||('NOT-'+Date.now()),subject:subj,type:type,sentBy:'Owner',date:date,status:'Draft',desc:desc});
+  var notice = {id:id||('NOT-'+Date.now()),subject:subj,type:type,sentBy:'Owner',date:date,status:'Draft',desc:desc};
+  contract.notices.push(notice);
+  saveToSheets('notices', p.id, notice.type, JSON.stringify({
+    id:notice.id, date:notice.date, subject:notice.subject,
+    type:notice.type, sentBy:notice.sentBy, status:notice.status,
+    desc:notice.desc, contract:contractId, project:p.name
+  }));
   renderProjectPage();
   // re-open Notices tab
   setTimeout(function() {
