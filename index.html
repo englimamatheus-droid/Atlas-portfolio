@@ -2266,7 +2266,10 @@ function selectContract(idx) {
 }
 
 function updatePlantNotes(val) {
-  if (currentProject && currentProject.plant) currentProject.plant.notas = val;
+  if (currentProject && currentProject.plant) {
+    currentProject.plant.notas = val;
+    saveToSheets('notes', currentProject.id, 'plant', val);
+  }
 }
 
 function printProject() {
@@ -2765,7 +2768,10 @@ function renderPerformanceView(p) {
 }
 
 function updatePerfNotes(val) {
-  if (currentProject) currentProject.performance.notes = val;
+  if (currentProject) {
+    currentProject.performance.notes = val;
+    saveToSheets('notes', currentProject.id, 'performance', val);
+  }
 }
 
 function addPPA(btn) {
@@ -3036,6 +3042,44 @@ function renderGenerationWalk(biz) {
     + '</div>'
     + '</div>';
 }
+
+
+// ── GOOGLE SHEETS INTEGRATION ─────────────────────────────────────────────
+var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyE7lWnvnY7a0eOMxlmt3tOhe_R3a1IS_3UNzMvQJCnM4h7Ve2Njrjuj2ufNVTbD8T8/exec';
+
+function saveToSheets(tab, project, type, content) {
+  var payload = JSON.stringify({ tab: tab, project: project, type: type, content: content });
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    body: payload,
+    headers: { 'Content-Type': 'text/plain' }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ if(d.status==='ok') showToast('Salvo ✓'); })
+  .catch(function(){ showToast('Erro ao salvar', true); });
+}
+
+function loadFromSheets(tab, callback) {
+  fetch(SHEETS_URL + '?tab=' + encodeURIComponent(tab))
+  .then(function(r){ return r.json(); })
+  .then(function(d){ if(d.status==='ok') callback(d.data); })
+  .catch(function(e){ console.warn('Sheets load error:', e); });
+}
+
+function showToast(msg, isError) {
+  var t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:700;font-family:Montserrat,sans-serif;z-index:9999;transition:opacity .3s;' +
+    (isError ? 'background:#ef4444;color:#fff;' : 'background:var(--accent-mid);color:#fff;');
+  t.style.opacity = '1';
+  setTimeout(function(){ t.style.opacity = '0'; }, 2500);
+}
+
 
 // ── THEME ─────────────────────────────────────────────────────────────────
 function applyStoredTheme() {
